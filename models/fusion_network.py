@@ -12,8 +12,7 @@ class FeatureFusionNet(nn.Module):
         actn_type: str = "relu", use_bn: bool = True, use_ln: bool = True, **kwargs) -> None:
         super().__init__()
 
-        conv_blocks.insert(0, 1)
-        self.depth_cnn = nn.Sequential(*[ConvBlock(conv_blocks[i - 1], conv_blocks[i], 3, 1, 1, use_bn, actn_type) for i in range(1, len(conv_blocks))])
+        self.depth_cnn = nn.Sequential(*[ConvBlock(1 if not i else conv_blocks[i - 1], conv_blocks[i], 3, 1, 1, use_bn, actn_type) for i in range(len(conv_blocks))])
 
         with torch.no_grad():
             in_features = self.depth_cnn(torch.randn(1, 1, res_in[0], res_in[1])).numel()
@@ -52,8 +51,7 @@ class ScoreFusionNet(nn.Module):
         actn_type: str = "relu", use_bn: bool = True, use_ln: bool = True, **kwargs) -> None:
         super().__init__()
 
-        conv_blocks.insert(0, 1)
-        self.depth_cnn = nn.Sequential(*[ConvBlock(conv_blocks[i - 1], conv_blocks[i], 3, 1, 1, use_bn, actn_type) for i in range(1, len(conv_blocks))])
+        self.depth_cnn = nn.Sequential(*[ConvBlock(1 if not i else conv_blocks[i - 1], conv_blocks[i], 3, 1, 1, use_bn, actn_type) for i in range(len(conv_blocks))])
 
         with torch.no_grad():
             in_features = self.depth_cnn(torch.randn(1, 1, res_in[0], res_in[1])).numel()

@@ -62,13 +62,12 @@ class MLP(nn.Module):
         super().__init__()
         
         activation = get_activation(actn_type)
-        layers.insert(0, in_features)
         
         self.fc = []
-        for i in range(1, len(layers)):
+        for i in range(len(layers)):
             self.fc.extend([
-                nn.LayerNorm(layers[i - 1]) if use_norm else nn.Identity(),
-                nn.Linear(layers[i - 1], layers[i]),
+                nn.LayerNorm(in_features if not i else layers[i - 1]) if use_norm else nn.Identity(),
+                nn.Linear(in_features if not i else layers[i - 1], layers[i]),
                 activation(inplace=True),
                 dropout(drop_prb)
             ])
