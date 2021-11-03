@@ -2,69 +2,85 @@
 
 import torch
 from torch import nn
+from typing import Type
 
-supported_blocks = ["base_block", "bn_block"]
+from torch.nn.modules import activation
 
-class BaseBlock(nn.Module):
-    """The architecture used in Lai et al. 2018.
+
+def get_activation(name: str) -> Type[nn.Module]:
+    """Selects specified activation function.
+
+    Args:
+        name (str): Activation name.
+        inplace (bool, optional): Whether to use inplace ops or not. Defaults to True.
+
+    Returns:
+        Type[nn.Module]: Activation class.
     """
+    assert name in ["relu", "swish", "mish"]
+
+    actn = None
+    if name == "relu":
+        actn = nn.ReLU
+    elif name == "swish":
+        actn = nn.SiLU
+    elif name == "mish":
+        actn = nn.Mish
+
+    return actn
+
+
+def dropout(drop_prob: float):
+    return nn.Dropout2d(drop_prob) if drop_prob > 0 else nn.Identity()
+
+class ConvBlock(nn.Module):
+    """Conv blocks used in Lai et al. 18."""
     
-    def __init__(self, C_in, C_out, kernel, stride, padding):
+    def __init__(self, in_channels: int, out_channels: int, kernel_size: int, stride: int, padding: int, use_bn: bool, actn_type: str = "relu"):
         super().__init__()
 
+        activation = get_activation(actn_type)
+
         self.layers = nn.Sequential(
-            nn.Conv2d(C_in, C_out, kernel, stride, padding),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(C_out, C_out, kernel, stride, padding),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d((2, 2))
-        )
-
-    def forward(self, input):
-        return self.layers(input)
-
-
-class BNBlock(nn.Module):
-    """Block with Batch Normalization.
-    """
-    def __init__(self, C_in, C_out, kernel, stride, padding):
-        super().__init__()
-        self.layers = nn.Sequential(
-            nn.Conv2d(C_in, C_out, kernel, stride, padding),
-            nn.ReLU(inplace=True),
-            nn.BatchNorm2d(C_out),
-            nn.Conv2d(C_out, C_out, kernel, stride, padding),
-            nn.ReLU(inplace=True),
+            nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding),
+            activation(inplace=True),
+            nn.BatchNorm2d(out_channels) if use_bn else nn.Identity(),
+            nn.Conv2d(out_channels, out_channels, kernel_size, stride, padding),
+            activation(inplace=True),
             nn.MaxPool2d((2, 2)),
-            nn.BatchNorm2d(C_out)
+            nn.BatchNorm2d(out_channels) if use_bn else nn.Identity()
         )
 
     def forward(self, input):
         return self.layers(input)
+
 
 class MLP(nn.Module):
-    def __init__(self, in_features: int, layers: list, drop_prb: float, num_classes: int):
+    """MLP classifier head."""
+
+    def __init__(self, in_features: int, layers: list, drop_prb: float, use_norm: bool, actn_type: str = "relu", num_classes: int = 14):
         super().__init__()
-        self.mlp = []
-        for i in range(len(layers)):
-            self.mlp.extend([
-                nn.Linear(in_features if i == 0 else layers[i - 1], layers[i]),
-                nn.Dropout2d(drop_prb) if drop_prb else nn.Identity(),
-                nn.ReLU(inplace=True)
+        
+        activation = get_activation(actn_type)
+        layers.insert(0, in_features)
+        
+        self.fc = []
+        for i in range(1, len(layers)):
+            self.fc.extend([
+                nn.LayerNorm(layers[i - 1]) if use_norm else nn.Identity(),
+                nn.Linear(layers[i - 1], layers[i]),
+                activation(inplace=True),
+                dropout(drop_prb)
             ])
-        self.mlp.append(nn.Linear(layers[-1], num_classes))
-        self.mlp = nn.Sequential(*self.mlp)
+        self.fc = nn.Sequential(*self.fc)
 
-    def forward(self, input):
-        return self.mlp(input)
+        self.head = nn.Sequential(
+            nn.LayerNorm(layers[-1]) if use_norm else nn.Identity(),
+            nn.Linear(layers[-1], num_classes)
+        )
 
-
-def get_block(block_type: str):
-    if block_type == "base_block":
-        return BaseBlock
-
-    elif block_type == "bn_block":
-        return BNBlock
-
-    else:
-        raise ValueError(f"Unsupported block_type: {block_type}. Must be one of {supported_blocks}")
+    def forward(self, x):
+        x = self.fc(x)
+        x = self.head(x)
+        return x
+        
