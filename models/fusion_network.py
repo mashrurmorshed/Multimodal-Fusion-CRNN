@@ -29,7 +29,7 @@ class FeatureFusionNet(nn.Module):
         t = x_dpt.shape[1]
 
         # depth images
-        x_dpt = rearrange(x_dpt, "b (t c) h w -> (b t) c h w", t=t)
+        x_dpt = rearrange(x_dpt, "b t c h w -> (b t) c h w")
         x_dpt = self.depth_cnn(x_dpt)
         x_dpt = rearrange(x_dpt, "(b t) c h w -> b t (c h w)", t=t)
         x_dpt = self.depth_lstm(x_dpt)[0]
@@ -69,7 +69,7 @@ class ScoreFusionNet(nn.Module):
         t = x_dpt.shape[1]
 
         # depth images
-        x_dpt = rearrange(x_dpt, "b (t c) h w -> (b t) c h w", t=t)
+        x_dpt = rearrange(x_dpt, "b t c h w -> (b t) c h w")
         x_dpt = self.depth_cnn(x_dpt)
         x_dpt = rearrange(x_dpt, "(b t) c h w -> b t (c h w)", t=t)
         x_dpt = self.depth_lstm(x_dpt)[0]
