@@ -6,8 +6,7 @@ import numpy as np
 import random
 import os
 import wandb
-from models.feature_fusion import FeatureFusionNet
-from models.score_fusion import ScoreFusionNet
+from models.fusion_network import FeatureFusionNet, ScoreFusionNet
 
 def seed_everything(seed: str) -> None:
     """Set manual seed.
