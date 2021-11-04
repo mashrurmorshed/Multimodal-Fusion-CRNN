@@ -78,7 +78,7 @@ def load_image_sequence(image_dir: str, frame_idxs: np.ndarray, T: int, transfor
 
         image = np.array(image)
 
-        if transform_dict["gvar"]:
+        if "gvar" in transform_dict:
             image = grayscale_variation(image, **transform_dict["gvar"])
 
         else:
