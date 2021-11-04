@@ -16,8 +16,8 @@ def get_config(config_file):
 
     if base_config["exp"]["device"] == "auto":
         base_config["exp"]["device"] = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        base_config["hparams"]["device"] = base_config["exp"]["device"]
-
+    
+    base_config["hparams"]["device"] = base_config["exp"]["device"]
     return base_config
 
 
