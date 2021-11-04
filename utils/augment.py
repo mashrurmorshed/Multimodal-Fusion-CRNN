@@ -1,6 +1,6 @@
+import albumentations as A
 import numpy as np
 from PIL import Image
-import albumentations as A
 import cv2
 
 
