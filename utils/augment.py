@@ -2,9 +2,9 @@ import albumentations as A
 import numpy as np
 from PIL import Image
 import cv2
+from typing import Tuple
 
-
-def grayscale_variation(image: np.ndarray, eta : int = 10, g_min : int = 155, g_max : int = 255) -> np.ndarray:
+def grayscale_variation(image: np.ndarray, eta: int = 10, g_min: int = 155, g_max: int = 255, depth_range: Tuple[float, float] = (200, 1500)) -> np.ndarray:
     """Quantizes depth levels into discrete grayscale image levels.
 
     Args:
@@ -17,7 +17,11 @@ def grayscale_variation(image: np.ndarray, eta : int = 10, g_min : int = 155, g_
         np.ndarray: Depth quantized image.
     """
     
-    mask = image > 200
+    if depth_range != None:
+        near, far = depth_range
+        mask = np.logical_and(image > near, image < far)
+    else:
+        mask = image > 0
 
     d_th = image.max()
     
