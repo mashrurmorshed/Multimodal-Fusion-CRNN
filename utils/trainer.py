@@ -77,7 +77,7 @@ def evaluate(net: nn.Module, criterion: Callable, dataloader: DataLoader, device
 
 @torch.no_grad()
 def evaluate_stats(net: nn.Module, dataloader: DataLoader, device: torch.device) -> dict:
-    """Performs inference.
+    """Performs inference and gets fine/coarse grain statistics.
 
     Args:
         net (nn.Module): Model instance.
@@ -130,7 +130,6 @@ def train(net: nn.Module, optimizer: optim.Optimizer, criterion: Callable, train
     """
     
     best_acc = 0.0
-    best_epoch = 0
     n_batches = len(trainloader)
     device = config["hparams"]["device"]
     log_file = os.path.join(config["exp"]["save_dir"], "training_log.txt")
@@ -182,12 +181,11 @@ def train(net: nn.Module, optimizer: optim.Optimizer, criterion: Callable, train
                 best_acc = val_acc
                 save_path = os.path.join(config["exp"]["save_dir"], "best.pth")
                 save_model(epoch, save_path, net, None, log_file) # save best val ckpt
-                best_epoch = epoch
             
 
     ###########################
     # training complete
     ###########################
 
-    log_dict = {"best_acc": best_acc, "best_epoch": best_epoch}
+    log_dict = {"best_acc": best_acc}
     log(log_dict, step, config)

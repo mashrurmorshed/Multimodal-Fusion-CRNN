@@ -1,4 +1,4 @@
-"""Defines data loading logic."""
+"""Defines dataset and dataloader wrappers for DHG-14/28 dataset."""
 
 import numpy as np
 import torch
@@ -11,24 +11,8 @@ import functools
 import multiprocessing as mp
 
 
-def get_samples_DHG(start_frame: int, end_frame: int, T: int) -> np.ndarray:
-    """Samples T frames from N frames.
-
-    Args:
-        N (int): Number of frames in video.
-        T (int): Sequence length.
-
-    Returns:
-        np.ndarray: Array containing min(T, num_frame) frame numbers.
-    """
-
-    num_frames = end_frame - start_frame + 1
-    samples = np.arange(start_frame, end_frame + 1) if num_frames < T else np.linspace(start_frame, end_frame, T)
-    return samples.astype(np.int32)
-
-
 class DHG_Dataset(Dataset):
-    """Dataset wrapper for the experiment."""
+    """Dataset wrapper for DHG."""
 
     def __init__(self, data_list: np.array, base_dir: str, D: int, T: int, num_classes: int, transform_dict: dict, cache = None):
         
@@ -50,8 +34,7 @@ class DHG_Dataset(Dataset):
     @staticmethod
     def get_image_joint(data_row: np.ndarray, base_dir: str, T: int, D: int, transform_dict: dict):
         start_frame, end_frame = data_row[4], data_row[5]
-        
-        frame_idxs = get_samples_DHG(start_frame, end_frame, T)
+        frame_idxs = get_samples(start_frame, end_frame, T)
         
         path_identifier = "gesture_{}/finger_{}/subject_{}/essai_{}/".format(*data_row[:4])
 
@@ -138,7 +121,7 @@ def init_cache(data_list: np.ndarray, base_dir: str, T: int, D: int, transform_d
     return cache
             
 
-def get_loader(data_list: np.ndarray, config: dict, cache: dict, train: bool = True):
+def build_loader(data_list: np.ndarray, config: dict, cache: dict, train: bool = True):
     dataset = DHG_Dataset(
         data_list = data_list,
         base_dir = config["data_root"],
@@ -158,3 +141,16 @@ def get_loader(data_list: np.ndarray, config: dict, cache: dict, train: bool = T
     )
 
     return dataloader
+
+def get_loaders(config, cache, eval_mode=False):
+    data_list = np.loadtxt(config["data_list_path"], np.int32)
+    data_list = np.hstack([data_list, np.arange(len(data_list)).reshape(-1, 1)])
+
+    loaders = dict()
+    if not eval_mode:
+        train_list = data_list[data_list[:, 2] != config["exp"]["val_sub"]]
+        loaders["train"] = build_loader(train_list, config, cache, train=True)
+    
+    val_list = data_list[data_list[:, 2] == config["exp"]["val_sub"]]
+    loaders["val"] = build_loader(val_list, config, cache, train=False)
+    return loaders

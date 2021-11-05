@@ -1,4 +1,4 @@
-"""Defines data loading logic."""
+"""Defines dataset and dataloader wrappers for SHREC'17 dataset."""
 
 import numpy as np
 import torch
@@ -11,14 +11,14 @@ import functools
 import multiprocessing as mp
 
 
-class SHREC_DHG_Dataset(Dataset):
-    """Dataset wrapper for the experiment."""
+class SHREC_Dataset(Dataset):
+    """Dataset wrapper for SHREC."""
 
     def __init__(self, data_list: np.array, base_dir: str, D: int, T: int, num_classes: int, transform_dict: dict, cache = None):
         
         super().__init__()
 
-        assert num_classes in [14, 28], "Invalid number of classes for SHREC-DHG"
+        assert num_classes in [14, 28], "Invalid number of classes for SHREC"
 
         self.data_list = data_list.astype(int)
         self.base_dir = base_dir
@@ -34,7 +34,7 @@ class SHREC_DHG_Dataset(Dataset):
     @staticmethod
     def get_image_joint(data_row: np.ndarray, base_dir: str, T: int, D: int, transform_dict: dict):
         num_frames = data_row[6]
-        frame_idxs = get_samples(num_frames, T)
+        frame_idxs = get_samples(0, num_frames-1, T)
 
         path_identifier = "gesture_{}/finger_{}/subject_{}/essai_{}/".format(*data_row[:4])
 
@@ -102,7 +102,7 @@ def init_cache(data_list: np.ndarray, base_dir: str, T: int, D: int, transform_d
     cache = {"joint": [], "image": []}
     
     loader_fn = functools.partial(
-        SHREC_DHG_Dataset.get_image_joint,
+        SHREC_Dataset.get_image_joint,
         base_dir=base_dir,
         T=T,
         D=D,
@@ -121,8 +121,8 @@ def init_cache(data_list: np.ndarray, base_dir: str, T: int, D: int, transform_d
     return cache
             
 
-def get_loader(data_list: np.ndarray, config: dict, cache: dict, train: bool = True):
-    dataset = SHREC_DHG_Dataset(
+def build_loader(data_list: np.ndarray, config: dict, cache: dict, train: bool = True):
+    dataset = SHREC_Dataset(
         data_list = data_list,
         base_dir = config["data_root"],
         D = config["hparams"]["model"]["D"],
@@ -141,3 +141,35 @@ def get_loader(data_list: np.ndarray, config: dict, cache: dict, train: bool = T
     )
 
     return dataloader
+
+def get_loaders(config):
+    train_list = np.loadtxt(config["train_list_path"], np.int32)
+    test_list = np.loadtxt(config["test_list_path"], np.int32)
+    cache_train, cache_test = None, None
+
+    if config["exp"]["cache"]:
+        cache_train = init_cache(
+            train_list,
+            config["data_root"],
+            config["hparams"]["model"]["T"],
+            config["hparams"]["model"]["D"],
+            config["hparams"]["transforms"]["train"],
+            config["exp"]["n_cache_workers"]
+        )
+
+        cache_test = init_cache(
+            test_list,
+            config["data_root"],
+            config["hparams"]["model"]["T"],
+            config["hparams"]["model"]["D"],
+            config["hparams"]["transforms"]["train"],
+            config["exp"]["n_cache_workers"]
+        )
+
+    train_list = np.hstack([train_list, np.arange(len(train_list)).reshape(-1, 1)])
+    test_list = np.hstack([test_list, np.arange(len(test_list)).reshape(-1, 1)])
+
+    loaders = dict()
+    loaders["train"] = build_loader(train_list, config, cache_train, train=True)
+    loaders["test"] = build_loader(test_list, config, cache_test, train=False)
+    return loaders

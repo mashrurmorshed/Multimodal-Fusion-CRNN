@@ -5,30 +5,33 @@ from utils.augment import  grayscale_variation
 
 
 def normalize(image: np.ndarray) -> np.ndarray:
-    """Normalize image to between 0 and 1.
+    """Normalize image to between 0 and 255.
 
     Args:
         image (array): Image array.
 
     Returns:
-        (array): Array with values between 0 and 1
+        (array): Array with values between 0 and 255.
     """
     i_min, i_max = image.min(), image.max()
-    return (255 * ((image - i_min) / ((i_max - i_min) if i_max > i_min else 1))).astype(np.uint8)
+    denom = (i_max - i_min) if i_max > i_min else 1
+    return (255 * ((image - i_min) / denom)).astype(np.uint8)
 
 
-def get_samples(N: int, T: int) -> np.ndarray:
-    """Samples T frames from N frames.
+def get_samples(start: int, end: int, T: int) -> np.ndarray:
+    """Samples T frame indices between start and end, inclusive.
 
     Args:
-        N (int): Number of frames in video.
+        start (int): Start frame index.
+        end (int): End frame index.
         T (int): Sequence length.
 
     Returns:
-        np.ndarray: Array containing min(T, N) indices.
+        np.ndarray: Array containing min(T, N) frame indices, where N = end - start + 1.
     """
 
-    samples = np.arange(N) if N < T else np.linspace(0, N - 1, T)
+    N = end - start + 1
+    samples = np.arange(start, end + 1) if N < T else np.linspace(start, end, T)
     return samples.astype(np.int32)
 
 

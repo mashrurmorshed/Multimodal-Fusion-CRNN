@@ -5,7 +5,7 @@ from utils.loss import LabelSmoothingLoss
 from utils.opt import get_optimizer
 from utils.scheduler import WarmUpLR, get_scheduler
 from utils.trainer import train
-from utils.load_DHG import get_loader, init_cache
+from utils.load_DHG import get_loaders, init_cache
 from utils.misc import seed_everything, count_params, get_model
 
 import torch
@@ -23,7 +23,8 @@ def training_pipeline(config, cache = None):
     """Initiates and executes all the steps involved with model training.
 
     Args:
-        config (dict) - Dict containing various settings for the training run.
+        config (dict): Dict containing various settings for the training run.
+        cache (dict): Cache containing the pre-loaded dataset.
     """
 
     config["exp"]["save_dir"] = os.path.join(config["exp"]["exp_dir"], config["exp"]["exp_name"])
@@ -39,19 +40,12 @@ def training_pipeline(config, cache = None):
     with open(os.path.join(config["exp"]["save_dir"], "settings.txt"), "w+") as f:
         f.write(config_str)
     
-    #####################################
+    ######################################
     # initialize training items
-    #####################################
+    ######################################
 
     # data
-    data_list = np.loadtxt(config["data_list_path"], np.int32)
-    data_list = np.hstack([data_list, np.arange(len(data_list)).reshape(-1, 1)])
-
-    train_list = data_list[data_list[:, 2] != config["exp"]["val_sub"]]
-    val_list = data_list[data_list[:, 2] == config["exp"]["val_sub"]]
-
-    trainloader = get_loader(train_list, config, cache, train=True)
-    valloader = get_loader(val_list, config, cache, train=False)
+    loaders = get_loaders(config, cache)
 
     # model
     model = get_model(config["hparams"]["model"])
@@ -74,19 +68,19 @@ def training_pipeline(config, cache = None):
     }
 
     if config["hparams"]["scheduler"]["n_warmup"]:
-        schedulers["warmup"] = WarmUpLR(optimizer, total_iters=len(trainloader) * config["hparams"]["scheduler"]["n_warmup"])
+        schedulers["warmup"] = WarmUpLR(optimizer, total_iters=len(loaders["train"]) * config["hparams"]["scheduler"]["n_warmup"])
 
     if config["hparams"]["scheduler"]["scheduler_type"] is not None:
-        total_iters = len(trainloader) * max(1, (config["hparams"]["n_epochs"] - config["hparams"]["scheduler"]["n_warmup"]))
+        total_iters = len(loaders["train"]) * max(1, (config["hparams"]["n_epochs"] - config["hparams"]["scheduler"]["n_warmup"]))
         schedulers["scheduler"] = get_scheduler(optimizer, config["hparams"]["scheduler"]["scheduler_type"], total_iters)
     
 
-    #####################################
+    ######################################
     # Training Run
-    #####################################
+    ######################################
 
     print("Initiating training.")
-    train(model, optimizer, criterion, trainloader, valloader, schedulers, config)
+    train(model, optimizer, criterion, loaders["train"], loaders["val"], schedulers, config)
 
 
 
@@ -96,7 +90,7 @@ def main(args):
     seed_everything(config["hparams"]["seed"])
 
     #################################
-    # single time caching
+    # single time global caching
     #################################
     
     data_list = np.loadtxt(config["data_list_path"], np.int32)

@@ -2,7 +2,7 @@ from argparse import ArgumentParser
 from config_parser import get_config
 
 from utils.trainer import evaluate_stats
-from utils.load_DHG import get_loader, init_cache
+from utils.load_DHG import get_loaders, init_cache
 from utils.misc import seed_everything, count_params, get_model, log
 
 import torch
@@ -16,11 +16,12 @@ import random
 import time
 
 
-def training_pipeline(config, cache = None):
-    """Initiates and executes all the steps involved with model training.
+def eval_pipeline(config, cache = None):
+    """Initiates and executes all the steps involved with statistics evaluation.
 
     Args:
         config (dict) - Dict containing various settings for the training run.
+        cache (dict): Cache containing the pre-loaded dataset.
     """
 
     config["exp"]["save_dir"] = os.path.join(config["exp"]["exp_dir"], config["exp"]["exp_name"])
@@ -37,15 +38,11 @@ def training_pipeline(config, cache = None):
         f.write(config_str)
     
     #####################################
-    # initialize training items
+    # initialize eval items
     #####################################
 
     # data
-    data_list = np.loadtxt(config["data_list_path"], np.int32)
-    data_list = np.hstack([data_list, np.arange(len(data_list)).reshape(-1, 1)])
-
-    val_list = data_list[data_list[:, 2] == config["exp"]["val_sub"]]
-    valloader = get_loader(val_list, config, cache, train=False)
+    loaders = get_loaders(config, cache, eval_mode=True)
 
     # model
     model = get_model(config["hparams"]["model"])
@@ -65,7 +62,7 @@ def training_pipeline(config, cache = None):
     #####################################
 
     print("Initiating evaluation.")
-    stats = evaluate_stats(model, valloader, config["hparams"]["device"])
+    stats = evaluate_stats(model, loaders["val"], config["hparams"]["device"])
     log_dict = {
         "fine": stats["fine"],
         "coarse": stats["coarse"]
@@ -119,10 +116,10 @@ def main(args):
             
 
             with wandb.init(project=config["exp"]["proj_name"], name=config["exp"]["exp_name"], config=config["hparams"], tags=config["exp"]["tags"], group=config["exp"]["group"]):
-                stats = training_pipeline(config, cache)
+                stats = eval_pipeline(config, cache)
         
         else:
-            stats = training_pipeline(config, cache)
+            stats = eval_pipeline(config, cache)
         
         all_preds.append(stats["preds"])
         all_labels.append(stats["labels"])
