@@ -1,0 +1,12 @@
+__pycache__/
+.vscode/
+env/
+runs/
+data/
+output/
+configs/
+notes.txt
+wandb
+unit_tests/
+.ipynb_checkpoints
+*.ipynb
