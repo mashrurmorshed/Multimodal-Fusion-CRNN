@@ -76,7 +76,7 @@ def log(log_dict: dict, step: int, config: dict) -> None:
 
 def get_model(model_config):
     if model_config["name"] is not None:
-        model = model_from_name(model_config["name"])
+        model = model_from_name(model_config["name"], model_config["num_classes"])
     else:
         if model_config["type"] == "feature_fusion":
             fusion_model = FeatureFusionNet
