@@ -14,7 +14,7 @@ import multiprocessing as mp
 class DHG_Dataset(Dataset):
     """Dataset wrapper for DHG."""
 
-    def __init__(self, data_list: np.array, base_dir: str, D: int, T: int, num_classes: int, transform_dict: dict, cache = None):
+    def __init__(self, data_list: np.array, base_dir: str, D: int, T: int, num_classes: int, transform_dict: dict, cache = None, train = True):
         
         super().__init__()
 
@@ -27,6 +27,7 @@ class DHG_Dataset(Dataset):
         self.num_classes = num_classes
         self.transform_dict = transform_dict
         self.cache = cache
+        self.train = train
 
     def __len__(self):
         return self.data_list.shape[0]
@@ -47,7 +48,7 @@ class DHG_Dataset(Dataset):
 
         # Loading images
         image_folder_path = os.path.join(base_dir, path_identifier)
-        image_sequence = load_image_sequence(image_folder_path, frame_idxs + 1, T, transform_dict, mode="dhg")
+        image_sequence = load_image_sequence(image_folder_path, frame_idxs + 1, T, transform_dict["preprocess"], mode="dhg")
 
         return joint_points, image_sequence
 
@@ -75,7 +76,7 @@ class DHG_Dataset(Dataset):
                 self.data_list[idx], self.base_dir, self.T, self.D, self.transform_dict
             )
 
-        if self.transform_dict["aug"] is not None:
+        if self.train and self.transform_dict["aug"] is not None:
             joint_points, image_sequence = apply_augs(joint_points, image_sequence, self.transform_dict["aug"])
 
         # bring values to 0-1 range & make float32
@@ -129,7 +130,8 @@ def build_loader(data_list: np.ndarray, config: dict, cache: dict, train: bool =
         T = config["hparams"]["model"]["T"],
         num_classes = config["hparams"]["model"]["num_classes"],
         transform_dict = config["hparams"]["transforms"]["train" if train else "eval"],
-        cache = cache
+        cache = cache,
+        train = train
     )
 
     dataloader = DataLoader(

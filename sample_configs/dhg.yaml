@@ -1,0 +1,80 @@
+# sample config
+
+data_root:  ./data/
+data_list_path: ./data/informations_troncage_sequences.txt
+
+exp:
+    wandb: True
+    wandb_api_key:
+    proj_name: DHG-FF-28
+    exp_dir: ./runs/
+    tags:
+    group: 0.4.0
+    exp_name:       # will create an experiment for each of 20 subjects
+    device: auto
+    log_freq: 20    # log every l_f steps
+    val_freq: 1     # validate every v_f epochs; -1 means only at the end
+    n_workers: 1
+    pin_memory: True
+    cache: True
+    n_cache_workers: 4
+    
+
+hparams:
+    seed: 0
+    batch_size: 16
+    n_epochs: 50
+    l_smooth: 0.1
+    
+    model:
+        name:
+        type: feature_fusion
+        conv_blocks: [8, 16, 32]
+        res_in: [50, 50]
+        T: 32
+        D: 2
+        num_classes: 14
+        drop_prb: 0.5
+        mlp_layers: [128]
+        lstm_units: 128
+        lstm_layers: 2
+        use_bilstm: True
+        actn_type: swish
+        use_bn: True
+        use_ln: False
+        
+    optimizer:
+        opt_type: adamw
+        opt_kwargs:
+            lr: 0.0003
+            weight_decay: 0.1
+    
+    scheduler:
+        n_warmup: 10
+        scheduler_type: cosine_annealing
+
+    transforms:
+        preprocess:
+            gvar:
+                g_min: 155
+                g_max: 255
+                eta: 10
+                near_depth_thresh: 200
+            
+            resize:
+                H_new: 50
+                W_new: 50
+        aug:
+            joint_shift_scale_rotate:
+                shift_limit: 0.2
+                scale_limit: 0.2
+                rotate_limit: 20
+            
+            image_shift_scale_rotate:
+                shift_limit: 0.2
+                scale_limit: 0.2
+                rotate_limit: 20
+            
+            time_shift:
+                p: 0.5    
+                frame_limit: 3

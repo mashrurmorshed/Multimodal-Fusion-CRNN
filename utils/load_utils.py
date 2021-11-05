@@ -58,20 +58,20 @@ def load_joints(joint_path: str, frame_idxs: np.ndarray, T: int) -> np.ndarray:
     return joint_points
 
 
-def load_image_sequence(image_dir: str, frame_idxs: np.ndarray, T: int, transform_dict: dict, mode: str = "shrec") -> np.ndarray:
+def load_image_sequence(image_dir: str, frame_idxs: np.ndarray, T: int, preprocess_dict: dict, mode: str = "shrec") -> np.ndarray:
     """Loads image sequence and applies necessary processing.
 
     Args:
         image_dir (str): Path to image folder.
         frame_idxs (np.ndarray): Selected frames.
         T (int): Sequence length.
-        transform_dict (dict): Dict containing transform specifications.
+        preprocess_dict (dict): Dict containing preprocess specifications.
 
     Returns:
         np.ndarray: Sequences of images of shape (T, 1, H, W)
     """
     
-    H_new, W_new = transform_dict["resize"]["H_new"], transform_dict["resize"]["W_new"]
+    H_new, W_new = preprocess_dict["resize"]["H_new"], preprocess_dict["resize"]["W_new"]
     image_blocks = np.zeros((len(frame_idxs), 1, H_new, W_new), dtype=np.uint8)
     file_name = "{}_depth.png" if mode == "shrec" else "depth_{}.png"
     
@@ -81,8 +81,8 @@ def load_image_sequence(image_dir: str, frame_idxs: np.ndarray, T: int, transfor
 
         image = np.array(image)
 
-        if "gvar" in transform_dict:
-            image = grayscale_variation(image, **transform_dict["gvar"])
+        if "gvar" in preprocess_dict:
+            image = grayscale_variation(image, **preprocess_dict["gvar"])
 
         else:
             image = normalize(image)

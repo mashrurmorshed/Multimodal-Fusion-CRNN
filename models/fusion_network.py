@@ -6,10 +6,9 @@ from typing import Tuple
 
 
 class FeatureFusionNet(nn.Module):
-
     def __init__(self, conv_blocks: list = [8, 16, 32], res_in : Tuple[int, int] = (50, 50), T : int = 32, D : int = 2, num_classes : int = 14,
         drop_prb : float = 0.5, mlp_layers: list = [128], lstm_units: int = 128, lstm_layers: int = 2, use_bilstm: bool = True,
-        actn_type: str = "relu", use_bn: bool = True, use_ln: bool = True, **kwargs) -> None:
+        actn_type: str = "swish", use_bn: bool = True, use_ln: bool = False, **kwargs) -> None:
         super().__init__()
 
         self.depth_cnn = nn.Sequential(*[ConvBlock(1 if not i else conv_blocks[i - 1], conv_blocks[i], 3, 1, 1, use_bn, actn_type) for i in range(len(conv_blocks))])
@@ -45,10 +44,9 @@ class FeatureFusionNet(nn.Module):
 
 
 class ScoreFusionNet(nn.Module):
-
     def __init__(self, conv_blocks: list = [8, 16, 32], res_in : Tuple[int, int] = (50, 50), T : int = 32, D : int = 2, num_classes : int = 14,
         drop_prb : float = 0.5, mlp_layers: list = [128], lstm_units: int = 128, lstm_layers: int = 2, use_bilstm: bool = True,
-        actn_type: str = "relu", use_bn: bool = True, use_ln: bool = True, **kwargs) -> None:
+        actn_type: str = "swish", use_bn: bool = True, use_ln: bool = False, **kwargs) -> None:
         super().__init__()
 
         self.depth_cnn = nn.Sequential(*[ConvBlock(1 if not i else conv_blocks[i - 1], conv_blocks[i], 3, 1, 1, use_bn, actn_type) for i in range(len(conv_blocks))])
@@ -80,3 +78,20 @@ class ScoreFusionNet(nn.Module):
         x_jnt = self.joint_mlp(x_jnt)
         
         return 0.5 * (x_dpt + x_jnt)
+
+
+def model_from_name(name, num_classes):
+    assert name in ["gvar_feature_fusion", "gvar_score_fusion", "vanilla_feature_fusion", "vanilla_score_fusion"]
+
+    if name == "gvar_feature_fusion":
+        model = FeatureFusionNet(num_classes=num_classes)
+    elif name == "gvar_score_fusion":
+        model = ScoreFusionNet(num_classes=num_classes)
+    elif name == "vanilla_feature_fusion":
+        model = FeatureFusionNet(res_in=(227,227), num_classes=num_classes, drop_prb=0.0, mlp_layers=[256,512,256], lstm_units=256,
+                    use_bilstm=False, use_bn=False)
+    elif name == "vanilla_score_fusion":
+        model = ScoreFusionNet(res_in=(227,227), num_classes=num_classes, drop_prb=0.0, mlp_layers=[256,512,256], lstm_units=256,
+                    use_bilstm=False, use_bn=False)
+
+    return model
