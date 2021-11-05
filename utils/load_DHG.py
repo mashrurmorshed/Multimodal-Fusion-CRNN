@@ -129,7 +129,7 @@ def build_loader(data_list: np.ndarray, config: dict, cache: dict, train: bool =
         D = config["hparams"]["model"]["D"],
         T = config["hparams"]["model"]["T"],
         num_classes = config["hparams"]["model"]["num_classes"],
-        transform_dict = config["hparams"]["transforms"]["train" if train else "eval"],
+        transform_dict = config["hparams"]["transforms"],
         cache = cache,
         train = train
     )
