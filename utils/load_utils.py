@@ -1,7 +1,7 @@
 import numpy as np
 import os
 from PIL import Image
-from utils.augment import  grayscale_variation
+from utils.gvar import  grayscale_variation
 
 
 def normalize(image: np.ndarray) -> np.ndarray:

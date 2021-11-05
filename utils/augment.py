@@ -2,31 +2,6 @@ import albumentations as A
 import numpy as np
 import cv2
 
-def grayscale_variation(image: np.ndarray, eta: int = 10, g_min: int = 155, g_max: int = 255, near_depth_thresh: int = 200) -> np.ndarray:
-    """Quantizes depth levels into discrete grayscale image levels.
-
-    Args:
-        image (np.ndarray): Input image of shape (H, W).
-        eta (int, optional): Number of gray levels. Defaults to 10.
-        g_min (int, optional): Lowest gray level. Defaults to 155.
-        g_max (int, optional): Highest gray level. Defaults to 255.
-        near_depth_thresh (int, optional): Minimum considered depth. Defaults to 200.
-
-    Returns:
-        np.ndarray: Depth quantized image.
-    """
-    
-    d_th = max(1, image.max())
-    mask = image > near_depth_thresh
-    
-    if np.any(mask):
-        d_min = image[mask].min()
-    else:
-        d_min = 0
-    
-    g_stride = int((g_max - g_min) / eta)
-    return np.where(mask, g_min + np.round(eta * (image - d_min) / (d_th - d_min)) * g_stride, 0).astype(np.uint8)
-
 
 def joint_shift_scale_rotate(joint_points: np.ndarray, shift_limit: float, scale_limit: float, rotate_limit: int, p: float = 0.5) -> np.ndarray:
     """Shift, scale, and rotate joint points within a specified range.
