@@ -24,3 +24,16 @@ Original 16-bit depth image:<br>
 
 Depth quantized 8-bit gvar image:<br>
 <img src="resources/depth_quantized_hand.png" alt="gVar" width="250"/>
+
+## Citation
+
+```bibtex
+@misc{mahmud2021deep,
+      title   = {A Deep Learning-based Multimodal Depth-Aware Dynamic Hand Gesture Recognition System}, 
+      author  = {Hasan Mahmud and Mashrur M. Morshed and Md. Kamrul Hasan},
+      year    = {2021},
+      eprint  = {2107.02543},
+      archivePrefix = {arXiv},
+      primaryClass = {cs.CV}
+}
+```
