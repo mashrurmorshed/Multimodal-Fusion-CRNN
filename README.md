@@ -1,5 +1,7 @@
 # Multimodal Fusion CRNN
 
+Official PyTorch implementation of [*A Deep Learning-based Multimodal Depth-Aware Dynamic Hand Gesture Recognition System*](https://arxiv.org/abs/2107.02543).
+
 <img src="resources/feature_fusion.png" alt="Feature Fusion architecture" width="350"/>
 
 ## Setup
