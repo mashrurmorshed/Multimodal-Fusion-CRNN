@@ -102,7 +102,7 @@ def main(args):
             config["data_root"],
             config["hparams"]["model"]["T"],
             config["hparams"]["model"]["D"],
-            config["hparams"]["transforms"]["train"],
+            config["hparams"]["transforms"],
             config["exp"]["n_cache_workers"]
         )
 
