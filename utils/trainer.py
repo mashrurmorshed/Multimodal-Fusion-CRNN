@@ -187,5 +187,5 @@ def train(net: nn.Module, optimizer: optim.Optimizer, criterion: Callable, train
     # training complete
     ###########################
     n_gestures = config["hparams"]["model"]["num_classes"]
-    log_dict = {"acc_{n_gestures}_gestures": best_acc}
+    log_dict = {f"acc_{n_gestures}_gestures": best_acc}
     log(log_dict, step, config)
