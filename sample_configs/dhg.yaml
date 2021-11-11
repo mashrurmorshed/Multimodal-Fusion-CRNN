@@ -6,12 +6,12 @@ data_list_path: ./data/informations_troncage_sequences.txt
 exp:
     wandb: True
     wandb_api_key:
-    proj_name: DHG-FF-28
+    proj_name: DHG-FF-14
     exp_dir: ./runs/
-    get_stats: True
+    get_stats: False
     cm_path: ./runs/cm.png
     tags:
-    group: 0.4.0
+    group: 0.0.0
     exp_name:       # will create an experiment for each of 20 subjects
     device: auto
     log_freq: 20    # log every l_f steps
@@ -30,7 +30,7 @@ hparams:
     
     model:
         name:
-        type: feature_fusion
+        type: score_fusion
         conv_blocks: [8, 16, 32]
         res_in: [50, 50]
         T: 32

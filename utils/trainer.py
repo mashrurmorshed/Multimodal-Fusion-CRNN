@@ -71,7 +71,7 @@ def evaluate(net: nn.Module, criterion: Callable, dataloader: DataLoader, device
 
 
     net.train()
-    accuracy = 100 * correct / len(dataloader.dataset)
+    accuracy = correct / len(dataloader.dataset)
     return accuracy, running_loss / len(dataloader)
 
 
@@ -108,7 +108,7 @@ def evaluate_stats(net: nn.Module, dataloader: DataLoader, device: torch.device)
     fine_idx = np.isin(stats["labels"], FINE)
     coarse_idx = np.isin(stats["labels"], COARSE)
 
-    grain_acc_fn = lambda a: 100 * (stats["preds"][a] == stats["labels"][a]).sum() / a.sum()
+    grain_acc_fn = lambda a: (stats["preds"][a] == stats["labels"][a]).sum() / a.sum()
     stats["fine"] = grain_acc_fn(fine_idx)
     stats["coarse"] = grain_acc_fn(coarse_idx)
 
@@ -169,7 +169,7 @@ def train(net: nn.Module, optimizer: optim.Optimizer, criterion: Callable, train
         #######################
         # epoch complete
         #######################
-        train_acc = 100 * correct / (len(trainloader.dataset))
+        train_acc = correct / (len(trainloader.dataset))
         log_dict = {"epoch": epoch, "time_per_epoch": time.time() - t0, "train_acc": train_acc, "avg_loss_per_ep": running_loss/len(trainloader)}
         log(log_dict, step, config)
 
