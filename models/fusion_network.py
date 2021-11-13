@@ -22,7 +22,7 @@ class FeatureFusionNet(nn.Module):
         f_in = 2 * T * lstm_units * (2 if use_bilstm else 1)
         self.mlp = MLP(f_in, mlp_layers, drop_prb, use_ln, actn_type, num_classes)
 
-     def forward(self, x):
+    def forward(self, x):
         x_jnt, x_dpt = x
         t = x_dpt.shape[1]
 
