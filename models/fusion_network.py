@@ -22,19 +22,20 @@ class FeatureFusionNet(nn.Module):
         f_in = 2 * T * lstm_units * (2 if use_bilstm else 1)
         self.mlp = MLP(f_in, mlp_layers, drop_prb, use_ln, actn_type, num_classes)
 
-    def forward(self, x):
+     def forward(self, x):
         x_jnt, x_dpt = x
-
-        # 2d joints
-        x_jnt = self.joint_lstm(x_jnt)[0]
+        t = x_dpt.shape[1]
 
         # depth images
         x_dpt = rearrange(x_dpt, "b t c h w -> (b t) c h w")
         x_dpt = self.depth_cnn(x_dpt)
-        x_dpt = rearrange(x_dpt, "(b t) c h w -> b t (c h w)", t=x_jnt.shape[1])
+        x_dpt = rearrange(x_dpt, "(b t) c h w -> b t (c h w)", t=t)
         x_dpt = self.depth_lstm(x_dpt)[0]
 
-        # feature fusion
+        # 2d joints
+        x_jnt = self.joint_lstm(x_jnt)[0]
+
+        # multimodal fusion
         x_fused = torch.cat((x_dpt, x_jnt), dim=1)
         x_fused = rearrange(x_fused, "b t f -> b (t f)")
         x_fused = self.mlp(x_fused)
