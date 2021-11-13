@@ -62,14 +62,14 @@ class ScoreFusionNet(nn.Module):
     def forward(self, x):
         x_jnt, x_dpt = x
         
+        # 2d joints
+        x_jnt = self.joint_lstm(x_jnt)[0]
+
         # depth images
         x_dpt = rearrange(x_dpt, "b t c h w -> (b t) c h w")
         x_dpt = self.depth_cnn(x_dpt)
         x_dpt = rearrange(x_dpt, "(b t) c h w -> b t (c h w)", t=x_jnt.shape[1])
         x_dpt = self.depth_lstm(x_dpt)[0]
-
-        # 2d joints
-        x_jnt = self.joint_lstm(x_jnt)[0]
 
         # score fusion
         x_dpt, x_jnt = rearrange([x_dpt, x_jnt], "i b t f -> i b (t f)")
