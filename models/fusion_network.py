@@ -25,14 +25,14 @@ class FeatureFusionNet(nn.Module):
     def forward(self, x):
         x_jnt, x_dpt = x
 
+        # 2d joints
+        x_jnt = self.joint_lstm(x_jnt)[0]
+
         # depth images
         x_dpt = rearrange(x_dpt, "b t c h w -> (b t) c h w")
         x_dpt = self.depth_cnn(x_dpt)
         x_dpt = rearrange(x_dpt, "(b t) c h w -> b t (c h w)", t=x_jnt.shape[1])
         x_dpt = self.depth_lstm(x_dpt)[0]
-
-        # 2d joints
-        x_jnt = self.joint_lstm(x_jnt)[0]
 
         # feature fusion
         x_fused = torch.cat((x_dpt, x_jnt), dim=1)
