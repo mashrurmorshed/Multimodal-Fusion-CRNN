@@ -7,6 +7,8 @@ import random
 import os
 import wandb
 from models.fusion_network import *
+from models.depth_crnn import *
+
 
 def seed_everything(seed: str) -> None:
     """Set manual seed.
@@ -82,6 +84,8 @@ def get_model(model_config):
             fusion_model = FeatureFusionNet
         elif model_config["type"] == "score_fusion":
             fusion_model = ScoreFusionNet
+        elif model_config["type"] == "depth_crnn":
+            fusion_model = DepthCRNN
         else:
             raise ValueError(f"Invalid model_name {model_config['name']}.")
         model = fusion_model(**model_config)
