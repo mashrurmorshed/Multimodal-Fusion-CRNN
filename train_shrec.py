@@ -51,10 +51,12 @@ def training_pipeline(config):
     print(f"Created model with {count_params(model)} parameters.")
 
     # loss
-    if config["hparams"]["l_smooth"]:
-        criterion = LabelSmoothingLoss(num_classes=config["hparams"]["model"]["num_classes"], smoothing=config["hparams"]["l_smooth"])
-    else:
-        criterion = nn.CrossEntropyLoss()
+    criterion = LabelSmoothingLoss(
+        num_classes=config["hparams"]["model"]["num_classes"],
+        smoothing=config["hparams"]["l_smooth"],
+        logits=False if config["hparams"]["model"]["type"]=="decision_fusion" else True
+    )
+    
 
     # optimizer
     optimizer = get_optimizer(model, config["hparams"])

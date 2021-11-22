@@ -84,6 +84,8 @@ def get_model(model_config):
             fusion_model = FeatureFusionNet
         elif model_config["type"] == "score_fusion":
             fusion_model = ScoreFusionNet
+        elif model_config["type"] == "decision_fusion":
+            fusion_model = DecisionFusionNet
         elif model_config["type"] == "depth_crnn":
             fusion_model = DepthCRNN
         else:

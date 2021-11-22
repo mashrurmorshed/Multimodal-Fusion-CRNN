@@ -11,13 +11,14 @@ class LabelSmoothingLoss(nn.Module):
         dim (int, optional): Dimension across which to apply loss. Defaults to -1.
     """
 
-    def __init__(self, num_classes: int, smoothing : float = 0.1, dim : int = -1):
+    def __init__(self, num_classes: int, smoothing: float = 0.1, dim: int = -1, logits: bool = True):
         """Initializer for LabelSmoothingLoss.
 
         Args:
             num_classes (int): Number of target classes.
             smoothing (float, optional): Smoothing fraction constant, in the range (0.0, 1.0). Defaults to 0.1.
             dim (int, optional): Dimension across which to apply loss. Defaults to -1.
+            logits (str, optional): Whether accepts logits or not. Defaults to True.
         """
         super().__init__()
         
@@ -25,6 +26,7 @@ class LabelSmoothingLoss(nn.Module):
         self.smoothing = smoothing
         self.cls = num_classes
         self.dim = dim
+        self.logits = True
 
     def forward(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
         """Forward function.
@@ -38,7 +40,8 @@ class LabelSmoothingLoss(nn.Module):
         """
 
         assert 0 <= self.smoothing < 1
-        pred = pred.log_softmax(dim=self.dim)
+        if self.logits:
+            pred = pred.log_softmax(dim=self.dim)
 
         with torch.no_grad():
             true_dist = torch.zeros_like(pred)
