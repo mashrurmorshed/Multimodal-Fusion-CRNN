@@ -123,6 +123,8 @@ def main(args):
         all_preds.append(stats["preds"])
         all_labels.append(stats["labels"])
 
+        break
+    
     all_preds = np.hstack(all_preds).reshape(-1, 1)
     all_labels = np.hstack(all_labels).reshape(-1, 1)
     all_preds_labels = np.hstack([all_preds, all_labels]).astype(np.int32)
