@@ -64,7 +64,8 @@ def eval_pipeline(config, cache = None):
     stats = evaluate_stats(model, loaders["val"], config["hparams"]["device"])
     log_dict = {
         "fine": stats["fine"],
-        "coarse": stats["coarse"]
+        "coarse": stats["coarse"],
+        "acc": stats["acc"]
     }
     log(log_dict, 0, config)
     return stats
@@ -124,7 +125,7 @@ def main(args):
         all_labels.append(stats["labels"])
 
         break
-    
+
     all_preds = np.hstack(all_preds).reshape(-1, 1)
     all_labels = np.hstack(all_labels).reshape(-1, 1)
     all_preds_labels = np.hstack([all_preds, all_labels]).astype(np.int32)
