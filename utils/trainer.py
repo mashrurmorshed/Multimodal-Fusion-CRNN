@@ -111,6 +111,7 @@ def evaluate_stats(net: nn.Module, dataloader: DataLoader, device: torch.device)
     grain_acc_fn = lambda a: (stats["preds"][a] == stats["labels"][a]).sum() / a.sum()
     stats["fine"] = grain_acc_fn(fine_idx)
     stats["coarse"] = grain_acc_fn(coarse_idx)
+    stats["acc"] = (stats["preds"] == stats["labels"]).sum() / len(stats["preds"])
 
     net.train()
     return stats
