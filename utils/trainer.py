@@ -111,6 +111,7 @@ def evaluate_stats(net: nn.Module, dataloader: DataLoader, device: torch.device)
     grain_acc_fn = lambda a: (stats["preds"][a] == stats["labels"][a]).sum() / a.sum()
     stats["fine"] = grain_acc_fn(fine_idx)
     stats["coarse"] = grain_acc_fn(coarse_idx)
+    stats["acc"] = (stats["preds"] == stats["labels"]).sum() / len(stats["preds"])
 
     net.train()
     return stats
@@ -169,7 +170,8 @@ def train(net: nn.Module, optimizer: optim.Optimizer, criterion: Callable, train
         #######################
         # epoch complete
         #######################
-        log_dict = {"epoch": epoch, "time_per_epoch": time.time() - t0, "train_acc": correct/(len(trainloader.dataset)), "avg_loss_per_ep": running_loss/len(trainloader)}
+        train_acc = correct / (len(trainloader.dataset))
+        log_dict = {"epoch": epoch, "time_per_epoch": time.time() - t0, "train_acc": train_acc, "avg_loss_per_ep": running_loss/len(trainloader)}
         log(log_dict, step, config)
 
         if not epoch % config["exp"]["val_freq"] or epoch == config["hparams"]["n_epochs"]:
@@ -186,6 +188,6 @@ def train(net: nn.Module, optimizer: optim.Optimizer, criterion: Callable, train
     ###########################
     # training complete
     ###########################
-
-    log_dict = {"best_acc": best_acc}
+    n_gestures = config["hparams"]["model"]["num_classes"]
+    log_dict = {f"acc_{n_gestures}_gestures": best_acc}
     log(log_dict, step, config)

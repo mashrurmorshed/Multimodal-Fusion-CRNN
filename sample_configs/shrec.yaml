@@ -29,7 +29,7 @@ hparams:
     
     model:
         name:
-        type: feature_fusion
+        type: score_fusion
         conv_blocks: [8, 16, 32]
         res_in: [50, 50]
         T: 32

@@ -4,9 +4,10 @@ from config_parser import get_config
 from utils.loss import LabelSmoothingLoss
 from utils.opt import get_optimizer
 from utils.scheduler import WarmUpLR, get_scheduler
-from utils.trainer import train
+from utils.trainer import train, evaluate_stats
 from utils.load_DHG import get_loaders, init_cache
-from utils.misc import seed_everything, count_params, get_model
+from utils.misc import seed_everything, count_params, get_model, log
+from utils.plotcm import make_confusion_matrix
 
 import torch
 from torch import nn
@@ -53,10 +54,11 @@ def training_pipeline(config, cache = None):
     print(f"Created model with {count_params(model)} parameters.")
 
     # loss
-    if config["hparams"]["l_smooth"]:
-        criterion = LabelSmoothingLoss(num_classes=config["hparams"]["model"]["num_classes"], smoothing=config["hparams"]["l_smooth"])
-    else:
-        criterion = nn.CrossEntropyLoss()
+    criterion = LabelSmoothingLoss(
+        num_classes=config["hparams"]["model"]["num_classes"],
+        smoothing=config["hparams"]["l_smooth"],
+        logits=False if config["hparams"]["model"]["type"]=="decision_fusion" else True
+    )
 
     # optimizer
     optimizer = get_optimizer(model, config["hparams"])
@@ -82,6 +84,28 @@ def training_pipeline(config, cache = None):
     print("Initiating training.")
     train(model, optimizer, criterion, loaders["train"], loaders["val"], schedulers, config)
 
+
+    #####################################
+    # Get statistics
+    #####################################
+
+    stats = None
+    if config["exp"]["get_stats"]:
+        # restore ckpt
+        ckpt_path = os.path.join(config["exp"]["save_dir"], "best.pth")
+        model.load_state_dict(torch.load(ckpt_path)["model_state_dict"])
+        print("Successfully restored state.")
+
+        print("Getting fine/coarse statistics.")
+        stats = evaluate_stats(model, loaders["val"], config["hparams"]["device"])
+        log_dict = {
+            "fine": stats["fine"],
+            "coarse": stats["coarse"]
+        }
+        step = config["hparams"]["n_epochs"] * len(loaders["train"])
+        log(log_dict, step, config)
+    
+    return stats
 
 
 def main(args):
@@ -111,7 +135,8 @@ def main(args):
     #################################
     
     subjects = np.unique(data_list[:, 2]).tolist()
-
+    all_labels, all_preds = [], []
+    
     for sub in subjects:
         config["exp"]["val_sub"] = sub
         config["exp"]["exp_name"] = f"sub_{sub}"
@@ -129,10 +154,21 @@ def main(args):
             
 
             with wandb.init(project=config["exp"]["proj_name"], name=config["exp"]["exp_name"], config=config["hparams"], tags=config["exp"]["tags"], group=config["exp"]["group"]):
-                training_pipeline(config, cache)
+                stats = training_pipeline(config, cache)
         
         else:
-            training_pipeline(config, cache)
+            stats = training_pipeline(config, cache)
+
+        if stats != None:
+            all_labels.append(stats["labels"])
+            all_preds.append(stats["preds"])
+        
+    if config["exp"]["get_stats"]:
+        all_labels = np.hstack(all_labels).ravel()
+        all_preds = np.hstack(all_preds).ravel()
+        make_confusion_matrix(all_labels, all_preds, config["exp"]["cm_path"])
+    
+    
 
 
 
