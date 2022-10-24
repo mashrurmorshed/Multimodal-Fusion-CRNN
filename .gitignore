@@ -9,4 +9,3 @@ notes.txt
 wandb
 unit_tests/
 .ipynb_checkpoints
-*.ipynb
