@@ -20,12 +20,23 @@ python train_SHREC.py --conf <path/to/config.yaml>
 ```
 See the [sample configs](sample_configs/) for config examples.
 
+## Tracking with W&B
+
+We use [Weights & Biases](https://wandb.ai/) for tracking experiments. You would need to make a free account, and then get an api token to use in your config. Here is a snapshot of the experiment panel, for example:
+
+<img src="resources/wandb.png" alt="Normal" width="600"/> <br>
+
+## Tutorials
+
+- [DHG-14/28: Training & Evaluation on Kaggle](notebooks/dhg-train-eval.ipynb)
+
 ## Grayscale Variation
 Original 16-bit depth image:<br>
 <img src="resources/depth_hand.png" alt="Normal" width="250"/> <br>
 
 Depth quantized 8-bit gvar image:<br>
 <img src="resources/depth_quantized_hand.png" alt="gVar" width="250"/>
+
 
 ## Citation
 
