@@ -32,7 +32,6 @@ def eval_pipeline(config, cache = None):
     ######################################
 
     config_str = yaml.dump(config)
-    print("Using settings:\n", config_str)
 
     with open(os.path.join(config["exp"]["save_dir"], "settings.txt"), "w+") as f:
         f.write(config_str)
@@ -65,7 +64,8 @@ def eval_pipeline(config, cache = None):
     stats = evaluate_stats(model, loaders["val"], config["hparams"]["device"])
     log_dict = {
         "fine": stats["fine"],
-        "coarse": stats["coarse"]
+        "coarse": stats["coarse"],
+        "acc": stats["acc"]
     }
     log(log_dict, 0, config)
     return stats
@@ -89,7 +89,7 @@ def main(args):
             config["data_root"],
             config["hparams"]["model"]["T"],
             config["hparams"]["model"]["D"],
-            config["hparams"]["transforms"]["train"],
+            config["hparams"]["transforms"],
             config["exp"]["n_cache_workers"]
         )
 
@@ -126,10 +126,10 @@ def main(args):
 
     all_preds = np.hstack(all_preds).reshape(-1, 1)
     all_labels = np.hstack(all_labels).reshape(-1, 1)
-    all_preds_labels = np.hstack([all_preds, all_labels])
+    all_preds_labels = np.hstack([all_preds, all_labels]).astype(np.int32)
 
-    
-    np.savetxt(os.path.join(config["exp"]["exp_dir"], "preds_labels.txt"), all_preds_labels)
+    pred_label_save_path = os.path.join(config["exp"]["exp_dir"], "preds_labels.txt")
+    np.savetxt(pred_label_save_path, all_preds_labels, fmt="%d")
     
 
 
